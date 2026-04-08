@@ -1,6 +1,6 @@
 import React from 'react';
 import { BatchItem } from '../types';
-import { FileAudio, CheckCircle, AlertCircle, Loader2, Play, Clock, Brain, Zap } from 'lucide-react';
+import { FileAudio, CheckCircle, AlertCircle, Loader2, Play, Clock, Zap } from 'lucide-react';
 import { formatFileSize } from '../utils/fileHelpers';
 
 interface BatchSidebarProps {
@@ -60,7 +60,7 @@ const BatchSidebar: React.FC<BatchSidebarProps> = ({ items, selectedId, onSelect
                   {item.file.name}
                 </p>
                 <div className="text-slate-400">
-                  {item.provider === 'GEMINI' ? <Brain size={12} /> : <Zap size={12} />}
+                  <Zap size={12} />
                 </div>
               </div>
               <div className="flex items-center justify-between mt-1">

@@ -1,5 +1,5 @@
 {
   "name": "TranscreveAI",
-  "description": "Sistema moderno de transcrição de áudio e vídeo com inteligência artificial, edição e exportação para PDF.",
+  "description": "Sistema moderno de transcrição de áudio e vídeo com Groq Whisper V3, edição e exportação para PDF.",
   "requestFramePermissions": []
 }

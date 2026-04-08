@@ -7,27 +7,16 @@
  */
 export const transcribeWithGroq = async (file: File, onProgress?: (percent: number) => void, userApiKey?: string): Promise<string> => {
   try {
-    const apiKey = userApiKey || process.env.GROQ_API_KEY;
-    
-    if (!apiKey) {
-        throw new Error("Chave da API Groq não encontrada. Por favor, configure sua chave nas configurações.");
-    }
-
     onProgress?.(10);
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('model', 'whisper-large-v3');
-    formData.append('response_format', 'json');
-    formData.append('language', 'pt'); // Default to Portuguese as requested by user context
+    if (userApiKey) formData.append('apiKey', userApiKey);
 
     onProgress?.(30);
 
-    const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+    const response = await fetch('/api/transcribe/groq', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-      },
       body: formData
     });
 
@@ -35,27 +24,15 @@ export const transcribeWithGroq = async (file: File, onProgress?: (percent: numb
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error("Groq API Error:", errorData);
-      
-      if (response.status === 429) {
-        throw new Error("429: Limite de cota do Groq atingido.");
-      }
-      
-      throw new Error(errorData.error?.message || `Erro na API Groq: ${response.statusText}`);
+      throw new Error(errorData.error || `Erro Groq: ${response.statusText}`);
     }
 
     const data = await response.json();
     onProgress?.(100);
 
-    if (data.text) {
-      return data.text;
-    } else {
-      throw new Error("Não foi possível gerar a transcrição com Groq. Resposta vazia.");
-    }
-
+    return data.text;
   } catch (error: any) {
-    console.error("Groq Transcription Error:", error);
-    const msg = error.message || "Falha ao conectar com o serviço de transcrição Groq.";
-    throw new Error(msg);
+    console.error("Groq Service Error:", error);
+    throw error;
   }
 };

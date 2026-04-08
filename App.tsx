@@ -5,10 +5,9 @@ import ProcessingState from './components/ProcessingState';
 import Editor from './components/Editor';
 import BatchSidebar from './components/BatchSidebar';
 import ApiKeyModal from './components/ApiKeyModal';
-import { transcribeMedia } from './services/geminiService';
 import { transcribeWithGroq } from './services/groqService';
-import { BatchItem, TranscriptionProvider } from './types';
-import { AlertCircle, ArrowLeft, RefreshCw, Timer, Brain, Zap } from 'lucide-react';
+import { BatchItem } from './types';
+import { AlertCircle, ArrowLeft, RefreshCw, Timer, Zap } from 'lucide-react';
 
 const MAX_CONCURRENT_UPLOADS = 1;
 
@@ -21,28 +20,20 @@ const App: React.FC = () => {
   
   // API Key State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [apiKeys, setApiKeys] = useState<{ gemini: string | null; groq: string | null }>({
-    gemini: null,
+  const [apiKeys, setApiKeys] = useState<{ groq: string | null }>({
     groq: null
   });
-  const [currentProvider, setCurrentProvider] = useState<TranscriptionProvider>('GEMINI');
 
   // Load API Keys
   useEffect(() => {
-    const savedGemini = localStorage.getItem('gemini_api_key');
     const savedGroq = localStorage.getItem('groq_api_key');
-    const savedProvider = localStorage.getItem('preferred_provider') as TranscriptionProvider;
     
     setApiKeys({
-      gemini: savedGemini,
       groq: savedGroq
     });
-    
-    if (savedProvider) setCurrentProvider(savedProvider);
   }, []);
 
-  const handleSaveApiKeys = (keys: { gemini: string; groq: string }) => {
-    localStorage.setItem('gemini_api_key', keys.gemini);
+  const handleSaveApiKeys = (keys: { groq: string }) => {
     localStorage.setItem('groq_api_key', keys.groq);
     
     setApiKeys(keys);
@@ -54,11 +45,6 @@ const App: React.FC = () => {
         setGlobalError(null);
         setPauseCountdown(0);
     }
-  };
-
-  const handleProviderChange = (provider: TranscriptionProvider) => {
-    setCurrentProvider(provider);
-    localStorage.setItem('preferred_provider', provider);
   };
 
   const updateItemStatus = useCallback((id: string, status: BatchItem['status'], result?: any, errorMsg?: string, progress?: number) => {
@@ -81,29 +67,18 @@ const App: React.FC = () => {
     if (!selectedItemId) setSelectedItemId(item.id);
 
     try {
-      let text = '';
-      const provider = item.provider;
-      
-      if (provider === 'GEMINI') {
-        text = await transcribeMedia(
-          item.file, 
-          (percent) => updateItemStatus(item.id, 'PROCESSING', undefined, undefined, percent),
-          apiKeys.gemini || undefined
-        );
-      } else {
-        text = await transcribeWithGroq(
-          item.file,
-          (percent) => updateItemStatus(item.id, 'PROCESSING', undefined, undefined, percent),
-          apiKeys.groq || undefined
-        );
-      }
+      const text = await transcribeWithGroq(
+        item.file,
+        (percent) => updateItemStatus(item.id, 'PROCESSING', undefined, undefined, percent),
+        apiKeys.groq || undefined
+      );
       
       const transcriptionResult = {
         text: text,
         fileName: item.file.name,
         date: new Date().toLocaleDateString('pt-BR'),
-        model: provider === 'GEMINI' ? 'Gemini 2.5 Flash' : 'Groq Whisper V3',
-        provider: provider
+        model: 'Groq Whisper V3',
+        provider: 'GROQ' as const
       };
 
       updateItemStatus(item.id, 'COMPLETED', transcriptionResult, undefined, 100);
@@ -177,7 +152,7 @@ const App: React.FC = () => {
       status: 'PENDING',
       originalSize: file.size,
       progress: 0,
-      provider: currentProvider
+      provider: 'GROQ'
     }));
 
     setBatchQueue(prev => [...prev, ...newItems]);
@@ -212,8 +187,6 @@ const App: React.FC = () => {
     <div className="h-screen bg-slate-50 flex flex-col overflow-hidden">
       <Header 
         onOpenSettings={() => setIsSettingsOpen(true)} 
-        currentProvider={currentProvider}
-        onProviderChange={handleProviderChange}
       />
       
       <ApiKeyModal 
@@ -253,9 +226,9 @@ const App: React.FC = () => {
                 <p className="text-lg text-slate-600 max-w-2xl mx-auto">
                   Carregue seus arquivos para transcrição automática.
                   <br/>
-                  <span className="text-sm opacity-75">Utilize sua própria chave API (Gemini ou Groq) para maior velocidade e limites.</span>
+                  <span className="text-sm opacity-75">Utilize sua própria chave API Groq para maior velocidade e limites.</span>
                 </p>
-                {(!apiKeys.gemini && !apiKeys.groq) && (
+                {!apiKeys.groq && (
                     <button 
                         onClick={() => setIsSettingsOpen(true)}
                         className="mt-6 px-5 py-2.5 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-semibold hover:bg-indigo-200 transition-colors flex items-center gap-2 mx-auto"

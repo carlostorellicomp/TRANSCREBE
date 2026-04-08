@@ -3,7 +3,7 @@ export enum AppStatus {
   BATCH_PROCESSING = 'BATCH_PROCESSING',
 }
 
-export type TranscriptionProvider = 'GEMINI' | 'GROQ';
+export type TranscriptionProvider = 'GROQ';
 
 export type BatchItemStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'ERROR';
 
